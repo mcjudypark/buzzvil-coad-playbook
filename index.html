@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>버즈빌 × 올리브영 협력광고 플레이북 · 인터랙티브</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --green:#5fbf3f; --green-deep:#3f8f28; --green-soft:#eaf7e3;
+    --ink:#1c2a16; --muted:#7a857a; --line:#e6ebe3; --bg:#eef2ea; --sidebar:#fff;
+    --shadow:0 8px 30px rgba(40,70,30,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:'Pretendard','Pretendard Variable',-apple-system,sans-serif;background:var(--bg);color:var(--ink);display:flex;-webkit-font-smoothing:antialiased;letter-spacing:-.01em;}
+
+  /* ---------- Sidebar TOC ---------- */
+  #toc{width:268px;flex:0 0 268px;height:100vh;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;transition:margin-left .28s cubic-bezier(.4,0,.2,1);z-index:40;}
+  #toc.collapsed{margin-left:-268px;}
+  .toc-head{padding:20px 18px 14px;border-bottom:1px solid var(--line);}
+  .toc-head .brand{font-size:13.5px;font-weight:800;color:var(--green-deep);line-height:1.35;}
+  .toc-head .brand small{display:block;font-size:10.5px;font-weight:500;color:var(--muted);margin-top:4px;letter-spacing:0;}
+  .toc-scroll{flex:1;overflow-y:auto;padding:8px 8px 30px;}
+  .toc-scroll::-webkit-scrollbar{width:7px;}
+  .toc-scroll::-webkit-scrollbar-thumb{background:#d7ded2;border-radius:4px;}
+  .grp{margin-top:4px;}
+  .grp>.gh{display:flex;align-items:center;gap:7px;width:100%;text-align:left;cursor:pointer;font-size:10.5px;font-weight:800;color:var(--green-deep);letter-spacing:.06em;padding:9px 10px;border:none;background:none;border-radius:8px;text-transform:uppercase;}
+  .grp>.gh:hover{background:var(--green-soft);}
+  .grp>.gh .chev{margin-left:auto;font-size:10px;transition:transform .2s;color:var(--muted);}
+  .grp.closed .chev{transform:rotate(-90deg);}
+  .grp.closed .items{display:none;}
+  .items{padding:2px 0 6px;}
+  .toc-link{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;font-size:12.5px;color:#4d574a;background:none;border:none;padding:7px 10px 7px 24px;border-radius:8px;line-height:1.35;}
+  .toc-link .pn{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:20px;}
+  .toc-link:hover{background:var(--green-soft);color:var(--green-deep);}
+  .toc-link.active{background:var(--green);color:#fff;font-weight:700;}
+  .toc-link.active .pn{color:rgba(255,255,255,.85);}
+  .toc-link .star{color:#f5a623;font-size:11px;}
+  .toc-link.active .star{color:#fff;}
+
+  /* ---------- Main stage ---------- */
+  #main{flex:1;height:100vh;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  #stage{position:relative;}
+  .slide{position:absolute;inset:0;display:none;align-items:center;justify-content:center;}
+  .slide.cur{display:flex;}
+  .slide-wrap{position:relative;width:1920px;height:1080px;transform-origin:center center;background:#fff;box-shadow:var(--shadow);border-radius:14px;overflow:hidden;}
+  .slide-canvas{position:relative;width:1920px;height:1080px;overflow:hidden;}
+  .slide-canvas.in{animation:slidein .5s cubic-bezier(.22,.61,.36,1);}
+  @keyframes slidein{from{opacity:0;transform:translateY(16px) scale(.99);}to{opacity:1;transform:none;}}
+  .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:linear-gradient(160deg,#f6faf3,#e7f4dd);color:var(--green-deep);}
+  .ph .pn{font-size:120px;font-weight:900;opacity:.18;line-height:1;}
+  .ph .lb{font-size:26px;font-weight:700;}
+  .ph .sub{font-size:15px;color:var(--muted);font-weight:500;}
+
+  /* ---------- nav ---------- */
+  .nav-arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:30;transition:background .15s,transform .15s;}
+  .nav-arrow:hover{background:#fff;transform:translateY(-50%) scale(1.08);}
+  .nav-arrow:disabled{opacity:.3;cursor:default;transform:translateY(-50%);}
+  .nav-arrow svg{width:20px;height:20px;stroke:var(--ink);fill:none;}
+  #prev{left:16px;}#next{right:16px;}
+  #pageind{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(28,42,22,.84);color:#fff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;z-index:30;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:10px;}
+  #pageind .bar{width:90px;height:4px;border-radius:3px;background:rgba(255,255,255,.25);overflow:hidden;}
+  #pageind .bar i{display:block;height:100%;background:var(--green);transition:width .3s;}
+  #tocToggle{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;z-index:35;display:flex;align-items:center;justify-content:center;}
+  #tocToggle svg{width:20px;height:20px;stroke:var(--ink);fill:none;}
+
+  /* ---------- interaction overlays (scoring / quadrant) ---------- */
+  [data-check]{cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s;}
+  [data-check].on{background:var(--green)!important;border-color:var(--green-deep)!important;box-shadow:0 0 0 3px rgba(95,191,63,.25);}
+  [data-check].on::after{content:"";position:absolute;left:50%;top:48%;width:30%;height:55%;border:solid #fff;border-width:0 3px 3px 0;transform:translate(-50%,-50%) rotate(45deg);}
+  [data-check]{position:absolute;}
+  [data-quad]{transition:box-shadow .2s,transform .2s,background .2s;}
+  [data-quad]:hover{box-shadow:0 0 0 3px rgba(95,191,63,.5),var(--shadow);}
+  [data-quad].match{box-shadow:0 0 0 4px var(--green),0 0 0 10px rgba(95,191,63,.2),var(--shadow);animation:qpulse 1.8s ease-in-out infinite;}
+  @keyframes qpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.012);}}
+  .q-go{position:absolute;right:18px;bottom:14px;background:var(--green);color:#fff;border-radius:999px;padding:7px 15px;font-size:14px;font-weight:700;opacity:0;transition:opacity .2s;display:flex;align-items:center;gap:5px;pointer-events:none;white-space:nowrap;}
+  [data-quad]:hover .q-go,[data-quad].match .q-go{opacity:1;}
+  #diagBanner{position:absolute;left:50%;top:200px;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:999px;padding:10px 22px;font-size:18px;font-weight:600;color:var(--muted);box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;white-space:nowrap;z-index:6;}
+  #diagBanner b{color:var(--green-deep);font-weight:800;}
+  .cta-pill{position:absolute;background:var(--green);color:#fff;border:none;border-radius:999px;font-family:inherit;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 6px 18px rgba(63,143,40,.35);transition:transform .15s,background .15s;}
+  .cta-pill:hover{background:var(--green-deep);transform:scale(1.04);}
+  /* slide 15 keyword pills (single-select per question) */
+  .kw-pill{position:absolute;cursor:pointer;border-radius:999px;border:2px solid transparent;background:transparent;transition:border-color .15s,background .15s,box-shadow .15s;}
+  .kw-pill:hover{border-color:rgba(95,191,63,.5);background:rgba(95,191,63,.08);}
+  .kw-pill.on{border-color:var(--green-deep);background:rgba(95,191,63,.22);box-shadow:0 0 0 2px rgba(95,191,63,.2);}
+  /* slide 17 brand-position pin */
+  .q-pin{position:absolute;transform:translate(-50%,-100%);pointer-events:none;z-index:8;display:flex;flex-direction:column;align-items:center;opacity:0;
+    transition:opacity .35s,left .55s cubic-bezier(.22,.61,.36,1),top .55s cubic-bezier(.22,.61,.36,1);}
+  .q-pin.show{opacity:1;}
+  .q-pin .bubble{background:var(--green-deep);color:#fff;font-size:19px;font-weight:800;padding:7px 16px;border-radius:999px;white-space:nowrap;box-shadow:0 6px 20px rgba(40,70,30,.45);}
+  .q-pin .dot{width:22px;height:22px;border-radius:50%;background:var(--green-deep);border:4px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);margin-top:5px;animation:pinpulse 1.6s infinite;}
+  @keyframes pinpulse{0%{box-shadow:0 0 0 0 rgba(63,143,40,.5);}70%{box-shadow:0 0 0 20px rgba(63,143,40,0);}100%{box-shadow:0 0 0 0 rgba(63,143,40,0);}}
+  /* external-link hotspots on image slides */
+  .link-hot{position:absolute;display:block;cursor:pointer;border-radius:12px;transition:background .15s,box-shadow .15s;}
+  .link-hot:hover{background:rgba(95,191,63,.12);box-shadow:0 0 0 3px rgba(95,191,63,.55);}
+  /* chart emphasis: persistent highlight on specific bars/segments (layout untouched) */
+  .emph{position:absolute;border:3px solid var(--green);border-radius:14px;background:rgba(95,191,63,.10);box-shadow:0 0 0 3px rgba(95,191,63,.16);pointer-events:none;}
+  .emph.circ{border-radius:50%;}
+  .emph.pulse{animation:emphpulse 1.6s ease-out 3;}
+  @keyframes emphpulse{0%{box-shadow:0 0 0 0 rgba(95,191,63,.5),0 0 0 3px rgba(95,191,63,.16);}70%{box-shadow:0 0 0 18px rgba(95,191,63,0),0 0 0 3px rgba(95,191,63,.16);}100%{box-shadow:0 0 0 0 rgba(95,191,63,0),0 0 0 3px rgba(95,191,63,.16);}}
+  .emph-tip{position:absolute;left:50%;top:-9px;transform:translate(-50%,-100%);background:var(--green-deep);color:#fff;font-size:17px;font-weight:800;padding:6px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 5px 16px rgba(40,70,30,.42);}
+  .emph-tip::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--green-deep);}
+  /* chapter-badge override pill */
+  .chbadge{position:absolute;display:flex;align-items:center;background:#265c00;border-radius:999px;color:#fff;
+    font-family:'Pretendard','Pretendard Variable',sans-serif;font-weight:800;white-space:nowrap;letter-spacing:.01em;}
+  /* slide 17 quadrant chart */
+  .qzone{position:absolute;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:2px dashed transparent;border-radius:14px;transition:background .2s,box-shadow .2s,border-color .2s;}
+  .qzone:hover{background:rgba(95,191,63,.07);}
+  .qzone.match{background:rgba(95,191,63,.15);border-color:var(--green);box-shadow:0 0 0 3px rgba(95,191,63,.25);}
+  .qzone .qn{font-size:25px;font-weight:800;color:var(--green-deep);}
+  .qzone .qt{font-size:15px;color:#7a857a;font-weight:600;}
+  .qzone .qgo{font-size:14px;font-weight:700;color:#fff;background:var(--green);padding:5px 13px;border-radius:999px;opacity:0;transition:opacity .2s;}
+  .qzone:hover .qgo,.qzone.match .qgo{opacity:1;}
+  .qaxis{position:absolute;color:#7a857a;font-weight:700;pointer-events:none;}
+  .qdot{position:absolute;transform:translate(-50%,-50%);z-index:7;opacity:0;pointer-events:none;transition:opacity .4s,left .6s cubic-bezier(.22,.61,.36,1),top .6s cubic-bezier(.22,.61,.36,1);}
+  .qdot.show{opacity:1;}
+  .qdot .qd-core{width:26px;height:26px;border-radius:50%;background:var(--green-deep);border:4px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35);animation:pulse 1.6s infinite;}
+  .qdot .qd-lab{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);background:var(--green-deep);color:#fff;font-size:17px;font-weight:800;padding:7px 15px;border-radius:999px;white-space:nowrap;box-shadow:0 5px 16px rgba(40,70,30,.45);}
+  .qpanel{position:absolute;background:#fff;border-radius:22px;box-shadow:0 10px 36px rgba(40,70,30,.12);padding:44px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:20px;}
+  .score-criteria{position:absolute;display:flex;align-items:center;gap:8px;background:#eaf7e3;border:1px solid #cfe6bd;border-radius:999px;padding:13px 24px;font-size:20px;color:var(--green-deep);font-weight:700;white-space:nowrap;}
+  /* slide 7 count-up numbers (white cover hides baked number; animated number on top) */
+  .cnum{position:absolute;display:flex;align-items:center;white-space:nowrap;background:#fff;
+    font-family:'Pretendard','Pretendard Variable',sans-serif;font-weight:800;color:#3a8c00;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;}
+</style>
+</head>
+<body>
+<script id="embedded-slides">window.__SLIDES={"1": "<div class=\"slide-canvas\" data-slide=\"1\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s01.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 1\">\n<\/div>\n", "2": "<div class=\"slide-canvas\" data-slide=\"2\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s02.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 2\">\n<\/div>\n", "3": "<div class=\"slide-canvas\" data-slide=\"3\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s03.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 3\">\n<\/div>\n", "4": "<div class=\"slide-canvas\" data-slide=\"4\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s04.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 4\">\n<\/div>\n", "5": "<div class=\"slide-canvas\" data-slide=\"5\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s05.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 5\">\n<\/div>\n", "6": "<div class=\"slide-canvas\" data-slide=\"6\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s06.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 6\">\n<\/div>\n", "7": "<div class=\"slide-canvas\" data-slide=\"7\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s07.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 7\">\n<\/div>\n", "8": "<div class=\"slide-canvas\" data-slide=\"8\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s08.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 8\">\n<\/div>\n", "9": "<div class=\"slide-canvas\" data-slide=\"9\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;font-family:'Pretendard',sans-serif;background:linear-gradient(180deg,#fafafa 28%,#82dc28 175%);\">\n\n  <!-- Chapter tag -->\n  <div style=\"position:absolute;left:-40px;top:108px;background:#265c00;display:flex;align-items:center;justify-content:center;padding:12px 25px 12px 135px;border-radius:8px;\">\n    <p style=\"margin:0;font-family:'Pretendard';font-weight:900;font-size:30px;line-height:1.245;color:#ffffff;white-space:nowrap;\">Chapter.02<\/p>\n  <\/div>\n\n  <!-- Main heading -->\n  <p style=\"position:absolute;left:303px;top:101px;margin:0;font-family:'Pretendard';font-weight:900;font-size:65px;line-height:1.325;color:#0a0a0a;white-space:pre;\">광고 무게의 중심, <br>‘구매가 일어나는 곳’으로 옮겨 갑니다<\/p>\n\n  <!-- Section headings -->\n  <p style=\"position:absolute;left:504px;top:327px;margin:0;font-family:'Pretendard';font-weight:700;font-size:24px;line-height:1.34;color:#000;letter-spacing:-0.12px;width:460px;\">버즈빌x올리브영 협력광고란?<\/p>\n  <p style=\"position:absolute;left:1435px;top:327px;margin:0;font-family:'Pretendard';font-weight:700;font-size:24px;line-height:1.34;color:#000;letter-spacing:-0.12px;width:460px;\">협력광고 참여 플로우 예시<\/p>\n\n  <!-- ================= 버즈빌 card ================= -->\n  <div style=\"position:absolute;left:94px;top:414.69px;width:305.96px;height:383.86px;background:#fff;border-radius:37.9px;box-shadow:3px 3px 38px 0 rgba(122,188,56,0.25);\"><\/div>\n  <div style=\"position:absolute;left:94px;top:414.69px;width:305.96px;height:76.02px;background:#258900;border-radius:37.9px 37.9px 0 0;\"><\/div>\n  <p style=\"position:absolute;left:241.58px;top:410px;transform:translateX(-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:27.29px;line-height:90.95px;color:#fafafa;text-align:center;letter-spacing:-0.758px;white-space:nowrap;\">버즈빌<\/p>\n  <p style=\"position:absolute;left:200.02px;top:510.42px;margin:0;font-family:'Pretendard';font-weight:700;font-size:15px;line-height:normal;color:#1f8a52;white-space:nowrap;\">매체 · 도달력<\/p>\n  <div style=\"position:absolute;left:241.58px;top:538.58px;transform:translateX(-50%);font-family:'Pretendard';font-weight:700;font-size:18.95px;color:#0c220d;text-align:center;letter-spacing:-0.758px;white-space:nowrap;\">\n    <p style=\"margin:0;line-height:26.53px;\">국내 프리미엄 오디언스를 보유한<\/p>\n    <p style=\"margin:0;line-height:26.53px;\">국내 1위 리워드 광고 네트워크<\/p>\n  <\/div>\n  <!-- 버즈빌 card logos: row1 -->\n  <img src=\"assets/s09/image762.png\" style=\"position:absolute;left:128px;top:600px;width:71.8px;height:71.8px;border-radius:8.79px;object-fit:cover;\">\n  <img src=\"assets/s09/image759.png\" style=\"position:absolute;left:207.56px;top:596.77px;width:77.7px;height:75.27px;object-fit:contain;\">\n  <img src=\"assets/s09/image760.png\" style=\"position:absolute;left:286.4px;top:596.77px;width:78.1px;height:78.63px;object-fit:contain;\">\n  <!-- 버즈빌 card logos: row2 -->\n  <img src=\"assets/s09/image758.png\" style=\"position:absolute;left:126px;top:681px;width:76.21px;height:77.7px;object-fit:contain;\">\n  <img src=\"assets/s09/image763.png\" style=\"position:absolute;left:209.44px;top:683.11px;width:72.27px;height:72.27px;border-radius:9.05px;border:0.227px solid #e0e0e0;box-shadow:0 0 3px 0 rgba(0,0,0,0.25);object-fit:cover;background:#fff;\">\n  <img src=\"assets/s09/image766.png\" style=\"position:absolute;left:289.21px;top:683.11px;width:72.27px;height:72.27px;border-radius:11.37px;object-fit:cover;\">\n\n  <!-- ================= X operator ================= -->\n  <div style=\"position:absolute;left:415px;top:600px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;\">\n    <div style=\"position:relative;width:48px;height:48px;\">\n      <div style=\"position:absolute;left:50%;top:50%;width:48px;height:11px;background:#82dc28;border-radius:6px;transform:translate(-50%,-50%) rotate(45deg);\"><\/div>\n      <div style=\"position:absolute;left:50%;top:50%;width:48px;height:11px;background:#82dc28;border-radius:6px;transform:translate(-50%,-50%) rotate(-45deg);\"><\/div>\n    <\/div>\n  <\/div>\n\n  <!-- ================= 올리브영 card ================= -->\n  <div style=\"position:absolute;left:478.89px;top:414.69px;width:303.14px;height:383.86px;background:#fff;border-radius:37.9px;box-shadow:3px 3px 38px 0 rgba(122,188,56,0.25);\"><\/div>\n  <div style=\"position:absolute;left:478.85px;top:414.69px;width:303.14px;height:76.02px;background:#258900;border-radius:37.9px 37.9px 0 0;\"><\/div>\n  <p style=\"position:absolute;left:626.66px;top:410px;transform:translateX(-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:27.29px;line-height:90.95px;color:#fafafa;text-align:center;letter-spacing:-0.758px;white-space:nowrap;\">올리브영<\/p>\n  <p style=\"position:absolute;left:581.09px;top:513.24px;margin:0;font-family:'Pretendard';font-weight:700;font-size:15px;line-height:normal;color:#1f8a52;white-space:nowrap;\">데이터 · 정확도<\/p>\n  <div style=\"position:absolute;left:630.37px;top:541.39px;transform:translateX(-50%);font-family:'Pretendard';font-weight:500;font-size:18.95px;color:#000;text-align:center;letter-spacing:-0.379px;width:300px;\">\n    <p style=\"margin:0;line-height:26.53px;font-weight:700;\">상품 조회·장바구니·구매 등<\/p>\n    <p style=\"margin:0;line-height:26.53px;font-weight:700;\">고관여 행동 데이터<\/p>\n  <\/div>\n\n  <!-- 올리브영 card center illustration: people + $ -->\n  <div style=\"position:absolute;left:478.89px;top:632px;width:303.14px;height:130px;\">\n    <!-- side gray people -->\n    <div style=\"position:absolute;left:24px;top:48px;width:24px;height:24px;border-radius:50%;background:#c9d1c4;\"><\/div>\n    <div style=\"position:absolute;left:18px;top:74px;width:36px;height:24px;border-radius:18px 18px 0 0;background:#c9d1c4;\"><\/div>\n    <div style=\"position:absolute;left:64px;top:28px;width:24px;height:24px;border-radius:50%;background:#dbe2d6;\"><\/div>\n    <div style=\"position:absolute;left:58px;top:54px;width:36px;height:24px;border-radius:18px 18px 0 0;background:#dbe2d6;\"><\/div>\n    <div style=\"position:absolute;left:213px;top:28px;width:24px;height:24px;border-radius:50%;background:#dbe2d6;\"><\/div>\n    <div style=\"position:absolute;left:207px;top:54px;width:36px;height:24px;border-radius:18px 18px 0 0;background:#dbe2d6;\"><\/div>\n    <div style=\"position:absolute;left:255px;top:48px;width:24px;height:24px;border-radius:50%;background:#c9d1c4;\"><\/div>\n    <div style=\"position:absolute;left:249px;top:74px;width:36px;height:24px;border-radius:18px 18px 0 0;background:#c9d1c4;\"><\/div>\n    <!-- center green person -->\n    <div style=\"position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:104px;height:104px;border-radius:50%;background:#d4efc0;\"><\/div>\n    <div style=\"position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:90px;height:90px;border-radius:50%;background:#a9e07f;\"><\/div>\n    <div style=\"position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border-radius:50%;background:#258900;\"><\/div>\n    <p style=\"position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:21.29px;color:#fafafa;text-align:center;\">$<\/p>\n  <\/div>\n\n  <!-- ================= = operator ================= -->\n  <div style=\"position:absolute;left:800px;top:600px;width:50px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;\">\n    <div style=\"width:43px;height:11px;background:#82dc28;border-radius:6px;\"><\/div>\n    <div style=\"width:43px;height:11px;background:#82dc28;border-radius:6px;\"><\/div>\n  <\/div>\n\n  <!-- ================= 3 white benefit pills ================= -->\n  <div style=\"position:absolute;left:849.51px;top:432.52px;width:350.07px;height:112.62px;background:#fff;border-radius:18.77px;box-shadow:3px 3px 38px 0 rgba(122,188,56,0.25);\"><\/div>\n  <div style=\"position:absolute;left:849.51px;top:553.59px;width:350.07px;height:112.62px;background:#fff;border-radius:18.77px;box-shadow:3px 3px 38px 0 rgba(122,188,56,0.25);\"><\/div>\n  <div style=\"position:absolute;left:849.51px;top:674.66px;width:350.07px;height:112.62px;background:#fff;border-radius:18.77px;box-shadow:3px 3px 38px 0 rgba(122,188,56,0.25);\"><\/div>\n  <p style=\"position:absolute;left:1034.4px;top:474.76px;transform:translateX(-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:29.09px;line-height:26.53px;color:#0c220d;text-align:center;letter-spacing:-0.758px;width:409px;\">최대 리워드형 인벤토리<\/p>\n  <p style=\"position:absolute;left:1024.77px;top:602.4px;transform:translateX(-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:29.09px;line-height:26.53px;color:#0c220d;text-align:center;letter-spacing:-0.758px;white-space:nowrap;\">낮은 CPC<\/p>\n  <p style=\"position:absolute;left:1026.92px;top:718.77px;transform:translateX(-50%);margin:0;font-family:'Pretendard';font-weight:700;font-size:29.09px;line-height:26.53px;color:#0c220d;text-align:center;letter-spacing:-0.758px;white-space:nowrap;\">많은 브랜드 이용<\/p>\n\n  <!-- ================= bottom caption ================= -->\n  <div style=\"position:absolute;left:653.5px;top:844px;transform:translateX(-50%);font-family:'Pretendard';font-weight:500;font-size:22px;color:#000;text-align:center;letter-spacing:-0.11px;width:1175px;\">\n    <p style=\"margin:0;line-height:1.34;\">올리브영 퍼스트파티 데이터를 버즈빌 머신러닝으로 분석해 '지금 살 사람'을 실시간 선별하고,<\/p>\n    <p style=\"margin:0;line-height:1.34;\">인터랙션 광고로 참여를 이끌어내 관심 고객 확보부터 구매 전환까지 운영하는 광고 상품<\/p>\n  <\/div>\n\n  <!-- ================= vertical divider ================= -->\n  <div style=\"position:absolute;left:1313px;top:359px;width:2px;height:593px;background:#d9d9d9;\"><\/div>\n\n  <!-- ================= phone mockup ================= -->\n  <div style=\"position:absolute;left:1438px;top:390px;width:239.82px;height:522.31px;border-radius:33.84px;overflow:hidden;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,0.15);\">\n    <img src=\"assets/s09/phone_screen.png\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;\">\n  <\/div>\n  <img src=\"assets/s09/mockup.svg\" style=\"position:absolute;left:1424px;top:382px;width:270px;height:542.6px;\">\n\n  <!-- ================= header buzzvil logo ================= -->\n  <img src=\"assets/s09/buzzvil_logo.svg\" style=\"position:absolute;left:1635px;top:99px;width:157px;height:27.6px;\">\n\n<\/div>\n", "10": "<div class=\"slide-canvas\" data-slide=\"10\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s10.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 10\">\n<\/div>\n", "11": "<div class=\"slide-canvas\" data-slide=\"11\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s11.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 11\">\n<\/div>\n", "12": "<div class=\"slide-canvas\" data-slide=\"12\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s12.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 12\">\n<\/div>\n", "13": "<div class=\"slide-canvas\" data-slide=\"13\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s13.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 13\">\n<\/div>\n", "14": "<div class=\"slide-canvas\" data-slide=\"14\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s14.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 14\">\n<\/div>\n", "15": "<div class=\"slide-canvas\" data-slide=\"15\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;font-family:'Pretendard',sans-serif;background:linear-gradient(180deg,#fafafa 28.148%,#82dc28 238.06%);\">\n\n  <!-- Chapter tag -->\n  <div style=\"position:absolute;left:-40px;top:108px;display:flex;align-items:center;justify-content:center;background:#265c00;padding:12px 25px 12px 135px;border-radius:8px;\">\n    <p style=\"margin:0;font-family:'Pretendard';font-weight:900;font-size:30px;line-height:1.245;color:#ffffff;white-space:nowrap;\">Chapter.03<\/p>\n  <\/div>\n\n  <!-- Title -->\n  <p style=\"position:absolute;left:303px;top:101px;margin:0;font-family:'Pretendard';font-weight:900;font-size:65px;line-height:1.325;color:#0a0a0a;white-space:nowrap;\">지난 올영세일, 짧게 회고해 볼까요?<\/p>\n\n  <!-- buzzvil logo -->\n  <img src=\"assets/s15/buzzvil-logo.svg\" style=\"position:absolute;left:1635px;top:99px;width:157px;height:28px;object-fit:contain;\">\n\n  <!-- Q1 -->\n  <p style=\"position:absolute;left:123px;top:302px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q1<\/p>\n  <p style=\"position:absolute;left:175px;top:300px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">이번 세일로 가장 많이 늘어난 건 무엇인가요?<\/p>\n  <div style=\"position:absolute;left:175px;top:338px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">매출<\/p><\/div>\n  <div style=\"position:absolute;left:241px;top:338px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">찜·관심고객<\/p><\/div>\n  <div style=\"position:absolute;left:357px;top:338px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">랭킹<\/p><\/div>\n  <div style=\"position:absolute;left:423px;top:338px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">리뷰 수<\/p><\/div>\n  <div style=\"position:absolute;left:506px;top:338px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">잘 모르겠어요<\/p><\/div>\n\n  <!-- Q2 -->\n  <p style=\"position:absolute;left:123px;top:413px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q2<\/p>\n  <p style=\"position:absolute;left:175px;top:411px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">세일 트래픽은 주로 어디서 왔나요?<\/p>\n  <div style=\"position:absolute;left:175px;top:449px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">브랜드 검색·오거닉<\/p><\/div>\n  <div style=\"position:absolute;left:336px;top:449px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">올영 추천·랭킹 노출<\/p><\/div>\n  <div style=\"position:absolute;left:500px;top:449px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">외부·협력광고<\/p><\/div>\n  <div style=\"position:absolute;left:630px;top:449px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">리타겟팅·재방문<\/p><\/div>\n  <div style=\"position:absolute;left:774px;top:449px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">잘 모르겠어요<\/p><\/div>\n\n  <!-- Q3 -->\n  <p style=\"position:absolute;left:123px;top:525px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q3<\/p>\n  <p style=\"position:absolute;left:175px;top:523px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">세일 전에 미리 관심고객(찜·팔로우)을 모아뒀나요?<\/p>\n  <div style=\"position:absolute;left:175px;top:561px;height:31px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;box-sizing:border-box;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;width:42px;\">충분히<\/p><\/div>\n  <div style=\"position:absolute;left:255px;top:561px;height:31px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;box-sizing:border-box;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;width:56px;\">어느정도<\/p><\/div>\n  <div style=\"position:absolute;left:349px;top:561px;height:31px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;box-sizing:border-box;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;width:59px;\">거의 못함<\/p><\/div>\n  <div style=\"position:absolute;left:446px;top:561px;height:31px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;box-sizing:border-box;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;width:45px;\">안 했음<\/p><\/div>\n  <div style=\"position:absolute;left:529px;top:561px;height:31px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;box-sizing:border-box;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;width:59px;\">해당 없음<\/p><\/div>\n\n  <!-- Q4 -->\n  <p style=\"position:absolute;left:123px;top:636px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q4<\/p>\n  <p style=\"position:absolute;left:175px;top:634px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">가장 아쉬웠던 점은 무엇인가요?<\/p>\n  <div style=\"position:absolute;left:175px;top:672px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">신규 유입 부족<\/p><\/div>\n  <div style=\"position:absolute;left:303px;top:672px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">전환율이 낮음<\/p><\/div>\n  <div style=\"position:absolute;left:428px;top:672px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">준비·운영 이슈<\/p><\/div>\n  <div style=\"position:absolute;left:561px;top:672px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">데이터·모수 부족<\/p><\/div>\n  <div style=\"position:absolute;left:708px;top:672px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">차별화 부족<\/p><\/div>\n\n  <!-- Q5 -->\n  <p style=\"position:absolute;left:123px;top:748px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q5<\/p>\n  <p style=\"position:absolute;left:175px;top:746px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">다음 세일 때 가장 키우고 싶은 건 무엇인가요?<\/p>\n  <div style=\"position:absolute;left:175px;top:783px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">브랜드 인지도<\/p><\/div>\n  <div style=\"position:absolute;left:300px;top:783px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">신규 유입<\/p><\/div>\n  <div style=\"position:absolute;left:397px;top:783px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">재구매·팬덤<\/p><\/div>\n  <div style=\"position:absolute;left:513px;top:783px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">관심고객 데이터<\/p><\/div>\n  <div style=\"position:absolute;left:651px;top:783px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">ROAS<\/p><\/div>\n\n  <!-- Q6 -->\n  <p style=\"position:absolute;left:123px;top:857px;margin:0;font-family:'Pretendard';font-weight:900;font-size:16px;color:#1f8a52;white-space:nowrap;\">Q6<\/p>\n  <p style=\"position:absolute;left:175px;top:855px;margin:0;font-family:'Pretendard';font-weight:700;font-size:21px;color:#0c120e;white-space:nowrap;\">버즈빌 x 올리브영 협력광고를 집행했나요?<\/p>\n  <div style=\"position:absolute;left:175px;top:891px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">집행했다<\/p><\/div>\n  <div style=\"position:absolute;left:303px;top:891px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">안했다<\/p><\/div>\n  <div style=\"position:absolute;left:407px;top:891px;display:flex;align-items:flex-start;background:#ffffff;border:1px solid rgba(31,138,82,0.25);padding:7px 14px;border-radius:16px;\"><p style=\"margin:0;font-family:'Pretendard';font-weight:500;font-size:15px;color:#0c120e;white-space:nowrap;\">타 매체 협력광고를 집행했다<\/p><\/div>\n\n<\/div>\n", "16": "<div class=\"slide-canvas\" data-slide=\"16\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;font-family:'Pretendard',sans-serif;background:linear-gradient(to bottom,#fafafa 28.148%,#82dc28 238.06%);\">\n\n  <!-- Chapter tag -->\n  <div style=\"position:absolute;left:-40px;top:108px;display:flex;align-items:center;justify-content:center;padding:12px 25px 12px 135px;border-radius:8px;background:#265c00;\">\n    <p style=\"margin:0;font-family:'Pretendard',sans-serif;font-weight:900;font-size:30px;line-height:1.245;color:#ffffff;white-space:nowrap;\">Chapter.03<\/p>\n  <\/div>\n\n  <!-- Heading -->\n  <p style=\"position:absolute;left:303px;top:101px;margin:0;font-family:'Pretendard',sans-serif;font-weight:900;font-size:65px;line-height:1.325;color:#0a0a0a;white-space:nowrap;\">우리 브랜드의 현 상황을 진단하는 것도 중요해요<\/p>\n\n  <!-- buzzvil logo -->\n  <img src=\"assets/s16/buzzvil-logo.svg\" alt=\"buzzvil\" style=\"position:absolute;left:1635px;top:99px;width:157px;height:28px;\">\n\n  <!-- ============ LEFT CARD ============ -->\n  <div style=\"position:absolute;left:124px;top:331px;width:792px;height:540px;background:#ffffff;border-radius:16px;\"><\/div>\n\n  <p style=\"position:absolute;left:160px;top:363px;margin:0;font-family:'Pretendard',sans-serif;font-weight:900;font-size:22px;line-height:normal;color:#1f8a52;white-space:nowrap;\">X축 · 브랜드 인지도<\/p>\n\n  <p style=\"position:absolute;left:156px;top:401px;width:720px;height:15px;margin:0;font-family:'Pretendard',sans-serif;font-weight:400;font-size:15px;line-height:normal;color:#6c7d72;\">올영 밖, 시장 전반에서 우리 브랜드가 얼마나 알려져 있는가 (검색·SNS·UGC·미디어)<\/p>\n\n  <div style=\"position:absolute;left:160px;top:443px;width:720px;height:1px;background:rgba(0,0,0,0.08);\"><\/div>\n\n  <!-- Left checkbox rows -->\n  <div data-check=\"x0\" style=\"position:absolute;left:160px;top:467px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:194px;top:465px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">브랜드명·대표 제품의 검색량(네이버·구글)이 꾸준히 발생한다<\/p>\n\n  <div data-check=\"x1\" style=\"position:absolute;left:160px;top:525px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:194px;top:523px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">인스타·유튜브·틱톡 등 SNS에서 팔로워·언급량이 일정 규모로 형성돼 있다<\/p>\n\n  <div data-check=\"x2\" style=\"position:absolute;left:160px;top:583px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:194px;top:581px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">인플루언서·소비자가 자발적으로 만든 리뷰·UGC가 꾸준히 나온다<\/p>\n\n  <div data-check=\"x3\" style=\"position:absolute;left:160px;top:641px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:194px;top:639px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">언론 보도·협업·캠페인 등 외부에 노출된 PR 자산이 있다<\/p>\n\n  <div data-check=\"x4\" style=\"position:absolute;left:160px;top:699px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:194px;top:697px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">광고에 의존하지 않아도 브랜드 검색·다이렉트로 직접 유입이 발생한다<\/p>\n\n  <p style=\"position:absolute;left:160px;top:829px;margin:0;font-family:'Pretendard',sans-serif;font-weight:700;font-size:16px;line-height:normal;color:#136b3d;white-space:nowrap;\">브랜드 인지도 점수 <span data-score=\"x\">0<\/span> / 20<\/p>\n\n  <!-- ============ RIGHT CARD ============ -->\n  <div style=\"position:absolute;left:1004px;top:331px;width:792px;height:540px;background:#ffffff;border-radius:16px;\"><\/div>\n\n  <p style=\"position:absolute;left:1040px;top:363px;margin:0;font-family:'Pretendard',sans-serif;font-weight:900;font-size:22px;line-height:normal;color:#1f8a52;white-space:nowrap;\">Y축 · 올리브영 내 관여도<\/p>\n\n  <p style=\"position:absolute;left:1040px;top:401px;width:720px;height:15px;margin:0;font-family:'Pretendard',sans-serif;font-weight:400;font-size:15px;line-height:normal;color:#6c7d72;\">올영 안에서 우리가 얼마나 알려져 있는가 (랭킹·검색·리뷰·오거닉)<\/p>\n\n  <div style=\"position:absolute;left:1040px;top:443px;width:720px;height:1px;background:rgba(0,0,0,0.08);\"><\/div>\n\n  <!-- Right checkbox rows -->\n  <div data-check=\"y0\" style=\"position:absolute;left:1040px;top:467px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:1074px;top:467px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">올영 카테고리 랭킹 상위권에 안정적으로 든다<\/p>\n\n  <div data-check=\"y1\" style=\"position:absolute;left:1040px;top:525px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:1074px;top:525px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">브랜드·대표 제품을 검색해 들어오는 유입이 꾸준하다<\/p>\n\n  <div data-check=\"y2\" style=\"position:absolute;left:1040px;top:583px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:1074px;top:583px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">제품당 리뷰가 충분히 쌓여 있다 (수백~수천 건)<\/p>\n\n  <div data-check=\"y3\" style=\"position:absolute;left:1040px;top:641px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:1074px;top:641px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">광고·세일 없이도 일정한 오거닉 매출이 난다<\/p>\n\n  <div data-check=\"y4\" style=\"position:absolute;left:1040px;top:699px;width:22px;height:22px;border:1.2px solid rgba(31,138,82,0.25);border-radius:5px;background:#e7f5ec;\"><\/div>\n  <p style=\"position:absolute;left:1074px;top:697px;width:682px;height:17px;margin:0;font-family:'Pretendard',sans-serif;font-weight:500;font-size:17px;line-height:normal;color:#0c120e;\">재구매·팬덤이 형성돼 있다<\/p>\n\n  <p style=\"position:absolute;left:1040px;top:829px;margin:0;font-family:'Pretendard',sans-serif;font-weight:700;font-size:16px;line-height:normal;color:#136b3d;white-space:nowrap;\">올리브영 내 관여도 점수 <span data-score=\"y\">0<\/span> / 20<\/p>\n\n<\/div>\n", "17": "<div class=\"slide-canvas\" data-slide=\"17\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(180deg,#fafafa 0%,#edf6e3 50%,#d1efb3 100%);font-family:'Pretendard','Pretendard Variable',sans-serif;\">\n  <div style=\"position:absolute;left:-40px;top:108px;width:326px;height:61px;background:#265c00;border-radius:8px;display:flex;align-items:center;padding-left:135px;color:#fff;font-weight:900;font-size:30px;\">Chapter.03<\/div>\n  <div style=\"position:absolute;left:303px;top:101px;font-size:65px;font-weight:900;color:#0a0a0a;line-height:1.325;white-space:nowrap;letter-spacing:-0.01em;\">우리 브랜드 위치 한 눈에 보기<\/div>\n  <img src=\"assets/s17/buzzvil_logo.svg\" style=\"position:absolute;left:1635px;top:99px;width:157px;height:27.6px;\">\n  <div class=\"qchart-host\" style=\"position:absolute;inset:0;\"><\/div>\n<\/div>\n", "18": "<div class=\"slide-canvas\" data-slide=\"18\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s18.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 18\">\n<\/div>\n", "19": "<div class=\"slide-canvas\" data-slide=\"19\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s19.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 19\">\n<\/div>\n", "20": "<div class=\"slide-canvas\" data-slide=\"20\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s20.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 20\">\n<\/div>\n", "21": "<div class=\"slide-canvas\" data-slide=\"21\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s21.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 21\">\n<\/div>\n", "22": "<div class=\"slide-canvas\" data-slide=\"22\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s22.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 22\">\n<\/div>\n", "23": "<div class=\"slide-canvas\" data-slide=\"23\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s23.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 23\">\n<\/div>\n", "24": "<div class=\"slide-canvas\" data-slide=\"24\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s24.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 24\">\n<\/div>\n", "25": "<div class=\"slide-canvas\" data-slide=\"25\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s25.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 25\">\n<\/div>\n", "26": "<div class=\"slide-canvas\" data-slide=\"26\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s26.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 26\">\n<\/div>\n", "27": "<div class=\"slide-canvas\" data-slide=\"27\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s27.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 27\">\n<\/div>\n", "28": "<div class=\"slide-canvas\" data-slide=\"28\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s28.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 28\">\n<\/div>\n", "29": "<div class=\"slide-canvas\" data-slide=\"29\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s29.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 29\">\n<\/div>\n", "30": "<div class=\"slide-canvas\" data-slide=\"30\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s30.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 30\">\n<\/div>\n", "31": "<div class=\"slide-canvas\" data-slide=\"31\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s31.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 31\">\n<\/div>\n", "32": "<div class=\"slide-canvas\" data-slide=\"32\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s32.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 32\">\n<\/div>\n", "33": "<div class=\"slide-canvas\" data-slide=\"33\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s33.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 33\">\n<\/div>\n", "34": "<div class=\"slide-canvas\" data-slide=\"34\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s34.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 34\">\n<\/div>\n", "35": "<div class=\"slide-canvas\" data-slide=\"35\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s35.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 35\">\n<\/div>\n", "36": "<div class=\"slide-canvas\" data-slide=\"36\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s36.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 36\">\n<\/div>\n", "37": "<div class=\"slide-canvas\" data-slide=\"37\" style=\"position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff;\">\n  <img src=\"pages/s37.png\" style=\"position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;\" alt=\"slide 37\">\n<\/div>\n"};</script>
+<aside id="toc">
+  <div class="toc-head"><div class="brand">버즈빌 × 올리브영 협력광고 플레이북<small>2026 · 인터랙티브 리포트</small></div></div>
+  <div class="toc-scroll" id="tocScroll"></div>
+</aside>
+<div id="main">
+  <button id="tocToggle" title="목차" onclick="toggleToc()"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <div id="stage"></div>
+  <button id="prev" class="nav-arrow" title="이전 (←)" onclick="go(cur-1)"><svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button id="next" class="nav-arrow" title="다음 (→)" onclick="go(cur+1)"><svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+  <div id="pageind"><span id="pnum">1 / 37</span><span class="bar"><i id="pbar"></i></span></div>
+</div>
+
+<script>
+const TOTAL = 37;
+/* slide titles for TOC (refined as slides get built) */
+const TITLES = {
+  1:'표지', 2:'목차', 3:'Intro · 왜 만들었나',
+  4:'커지는 시장, 좁아지는 관문', 5:'K-뷰티 성장 판로', 6:'똑똑해진 소비자',
+  7:'올리브영이라는 관문', 8:'퍼스트파티 데이터', 9:'협력광고란?', 10:'마케팅을 한 번에', 11:'구매 여정 설계', 12:'우리가 만나는 고객', 13:'기여도 측정',
+  14:'활용 가이드', 15:'세일 회고', 16:'현 상황 진단 (점수 입력)', 17:'내 위치 한눈에 보기',
+  18:'1사분면 · 점유율 확장형', 19:'2사분면 · 신뢰확산형', 20:'2사분면 · 캠페인 상세', 21:'3사분면 · 풀퍼널 구축형', 22:'3사분면 · 캠페인 상세', 23:'4사분면 · 전환가속형', 24:'4사분면 · 캠페인 상세',
+  25:'성공 사례 소개', 26:'라운드랩', 27:'마녀공장', 28:'에스네이처', 29:'헤어 제품 브랜드 A', 30:'이너뷰티 B', 31:'이너뷰티 C',
+  32:'이렇게 시작하세요', 33:'FAQ · 집행 프로세스', 34:'FAQ · 운영 가이드', 35:'레퍼런스', 36:'런칭 프로모션', 37:'컨설팅 신청',
+};
+const STARS = {15:1,16:1,17:1};
+/* TOC chapter groups (page ranges) */
+const TOC = [
+  {t:'표지 · Intro', open:true, r:[1,3]},
+  {t:'Ch.01 시장의 변화', open:false, r:[4,7]},
+  {t:'Ch.02 협력광고', open:false, r:[8,13]},
+  {t:'Ch.03 우리 브랜드 진단', open:true, r:[14,24]},
+  {t:'Ch.04 성공 사례', open:false, r:[25,31]},
+  {t:'Ch.05 시작하기', open:false, r:[32,37]},
+];
+/* quadrant -> landing slide (2·3·4사분면 are 2-page spreads → land on the intro page) */
+const QUAD_PAGE = {1:18, 2:19, 3:21, 4:23};
+const QUAD_NAME = {1:'점유율 확장형', 2:'신뢰확산형', 3:'풀퍼널 구축형', 4:'전환가속형'};
+/* video overlays: slide -> [{src, left,top,w,h (px on 1920x1080), radius}] (loop in place) */
+const VIDEOS = {
+  9:  [{src:'media/videos/interaction_09.mp4', left:1438, top:390, w:239.82, h:522.31, radius:33.84, fit:'cover'}], // phone (portrait)
+  19: [{src:'media/videos/interaction_18.mp4', left:1094, top:469, w:617,    h:411.33, radius:14, fit:'cover'}],    // 2사분면 도달범위 (landscape)
+  21: [{src:'media/videos/interaction_29.mp4', left:1098, top:474, w:625,    h:416.67, radius:14, fit:'cover'}],    // 3사분면 도달범위
+  23: [{src:'media/videos/interaction_22.mp4', left:1097, top:479, w:609,    h:406,    radius:14, fit:'cover'}],    // 4사분면 도달범위
+};
+
+/* --- slide 15: keyword pills, single-select per question (px on 1920x1080) --- */
+const P15 = [
+  /*Q1*/ [{l:175,t:338,w:56,h:32},{l:241,t:338,w:106,h:32},{l:357,t:338,w:56,h:32},{l:423,t:338,w:73,h:32},{l:506,t:338,w:115,h:32}],
+  /*Q2*/ [{l:175,t:449,w:151,h:32},{l:336,t:449,w:154,h:32},{l:500,t:449,w:120,h:32},{l:630,t:449,w:134,h:32},{l:774,t:449,w:115,h:32}],
+  /*Q3*/ [{l:175,t:561,w:70,h:31},{l:255,t:561,w:84,h:31},{l:349,t:561,w:87,h:31},{l:446,t:561,w:73,h:31},{l:529,t:561,w:87,h:31}],
+  /*Q4*/ [{l:175,t:672,w:118,h:32},{l:303,t:672,w:115,h:32},{l:428,t:672,w:123,h:32},{l:561,t:672,w:137,h:32},{l:708,t:672,w:101,h:32}],
+  /*Q5*/ [{l:175,t:783,w:115,h:32},{l:300,t:783,w:87,h:32},{l:397,t:783,w:106,h:32},{l:513,t:783,w:128,h:32},{l:651,t:783,w:68,h:32}],
+  /*Q6*/ [{l:175,t:891,w:84,h:32},{l:303,t:891,w:70,h:32},{l:407,t:891,w:204,h:32}],
+];
+
+/* --- clickable external links on image slides: slide -> [{left,top,w,h,url}] (px on 1920x1080) --- */
+const LINKS = {
+  26: [{left:1583, top:114, w:263, h:62, url:'https://www.buzzvil.com/resources/prASTehUzvmui1U0dMXZc'}], // 라운드랩 인터뷰
+  27: [{left:1583, top:114, w:263, h:62, url:'https://www.buzzvil.com/resources/1HWw98bIXUU2g0RkYi9M29'}], // 마녀공장 인터뷰
+  28: [{left:1583, top:114, w:263, h:62, url:'https://www.buzzvil.com/resources/5VX9CAHpIg0Im4uGEvoVD8'}], // 에스네이처 인터뷰
+  33: [{left:710, top:804, w:561, h:81,  url:'https://buzzvil.gitbook.io/guide'}],
+  35: [{left:125, top:377, w:819, h:506, url:'https://featpaper.com/v/hYwzzz5d'},
+       {left:970, top:377, w:819, h:506, url:'https://featpaper.com/v/K93mWDaB'}],
+  37: [{left:120, top:525, w:582, h:92,  url:'https://form.jotform.com/260130595709458'}],
+};
+
+/* --- baked chapter-badge override (cover + redraw): slide -> {pill geometry + text} --- */
+const BADGE = {
+  7: {left:-40, top:108, w:325, h:61, padLeft:135, size:26, text:'Chapter.01'},
+};
+
+/* --- chart emphasis hotspots on image slides: slide -> [{rect:[l,t,w,h], label}] (px on 1920x1080) --- */
+const EMPHASIS = {
+  12: [
+    {rect:[300,558,304,356],  label:'30·40·50대 90%+'},   // 30/40/50대 막대 3개 (여유 패딩)
+    {rect:[718,558,194,356],  label:'Gold·Black 87%'},      // Gold·Black 막대 (여유 패딩)
+    {circle:[1561,620,76],    label:'중복 4%'},             // 도넛 중복 유저 세그먼트 (유지)
+  ],
+};
+
+/* --- slide 7 count-up numbers: cover baked number (white) + animate. px on 1920x1080 --- */
+const COUNTUP = {
+  7: [
+    {x:178,  y:731, w:238, h:60, size:42, target:58335, fmt:'eok'},               // 5조 8,335억
+    {x:455,  y:729, w:128, h:60, size:42, target:90,   suffix:'%+'},               // 90%+
+    {x:717,  y:729, w:122, h:60, size:42, target:116,  suffix:'개'},               // 116개
+    {x:1349, y:748, w:190, h:78, size:58, target:31.6, dec:1, suffix:'%'},         // 31.6% (big)
+    // 도넛 원 안 31.6%는 인터랙션 없이 박힌 텍스트 그대로 유지
+  ],
+};
+
+/* ---------- state ---------- */
+let cur = 1;
+const xState=[false,false,false,false,false], yState=[false,false,false,false,false];
+let touched=false;
+/* --- 세일 회고(15P) → 진단 ±1칸(±4점) 보정. key = "questionIdx-optionIdx" (0-based) --- */
+const recapSel={};   // qi -> selected oi
+const RECAP_MAP={
+  '0-2':{y:+4, label:'랭킹', eff:'관여도 ↑'},                 // Q1 가장 늘어난 것 = 랭킹
+  '0-3':{y:+4, label:'리뷰 수', eff:'관여도 ↑'},             // Q1 = 리뷰 수
+  '1-0':{x:+4, label:'브랜드 검색·오거닉', eff:'인지도 ↑'},   // Q2 트래픽 = 브랜드 검색·오거닉
+  '1-1':{y:+4, label:'올영 추천·랭킹', eff:'관여도 ↑'},       // Q2 = 올영 추천·랭킹 노출
+  '1-3':{y:+4, label:'리타겟팅·재방문', eff:'관여도 ↑'},      // Q2 = 리타겟팅·재방문
+  '3-0':{x:-4, label:'신규 유입 부족', eff:'인지도 ↓'},       // Q4 아쉬움 = 신규 유입 부족
+  '3-3':{y:-4, label:'데이터·모수 부족', eff:'관여도 ↓'},     // Q4 = 데이터·모수 부족
+};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+function recapAdjust(){ let rx=0,ry=0; for(const qi in recapSel){ const m=RECAP_MAP[qi+'-'+recapSel[qi]]; if(m){rx+=m.x||0;ry+=m.y||0;} } return {rx,ry}; }
+function axisScores(){
+  const baseX=xState.filter(Boolean).length*4, baseY=yState.filter(Boolean).length*4, {rx,ry}=recapAdjust();
+  return {baseX,baseY,rx,ry, xs:clamp(baseX+rx,0,20), ys:clamp(baseY+ry,0,20)};
+}
+const loaded={};
+
+/* ---------- build slide shells ---------- */
+const stage=document.getElementById('stage');
+const slideEls={};
+for(let n=1;n<=TOTAL;n++){
+  const sec=document.createElement('section'); sec.className='slide'; sec.dataset.p=n;
+  const wrap=document.createElement('div'); wrap.className='slide-wrap';
+  wrap.innerHTML=`<div class="ph"><div class="pn">${n}</div><div class="lb">${TITLES[n]||'슬라이드 '+n}</div><div class="sub">로딩 중…</div></div>`;
+  sec.appendChild(wrap); stage.appendChild(sec); slideEls[n]={sec,wrap};
+}
+
+async function loadSlide(n){
+  if(loaded[n]) return;
+  loaded[n]='pending';
+  try{
+    let html;
+    if(window.__SLIDES && window.__SLIDES[n]!=null){ html=window.__SLIDES[n]; }   // embedded (works via file://)
+    else { const res=await fetch(`slides/s${String(n).padStart(2,'0')}.html`,{cache:'no-cache'}); if(!res.ok) throw new Error('404'); html=await res.text(); }
+    slideEls[n].wrap.innerHTML=html;
+    loaded[n]='ok';
+    if(n===15) wireSlide15();
+    if(n===16) wireScoring();
+    if(n===17) wireQuadrant();
+    injectVideos(n);
+    injectLinks(n);
+    injectEmphasis(n);
+    injectBadge(n);
+    injectCountup(n);
+    if(+n===cur){ setTimeout(()=>pulseEmphasis(n),120); setTimeout(()=>playCountup(n),140); }
+  }catch(e){ loaded[n]='miss'; /* keep placeholder */ }
+}
+
+/* ---------- scaling ---------- */
+function fit(){
+  const m=document.getElementById('main');
+  const pad=46;
+  const w=m.clientWidth-pad*2, h=m.clientHeight-pad*2;
+  const s=Math.min(w/1920, h/1080);
+  document.querySelectorAll('.slide-wrap').forEach(el=>{ el.style.transform=`scale(${s})`; });
+  const sd=document.getElementById('stage'); sd.style.width=(1920*s)+'px'; sd.style.height=(1080*s)+'px';
+  document.querySelectorAll('.slide-wrap').forEach(el=>{ el.style.transformOrigin='top left'; el.style.position='absolute'; el.style.left='0'; el.style.top='0'; });
+}
+window.addEventListener('resize',fit);
+
+/* ---------- navigation ---------- */
+function go(n){
+  n=Math.max(1,Math.min(TOTAL,n));
+  // preload neighbours
+  loadSlide(n); loadSlide(n+1); loadSlide(n-1>=1?n-1:1);
+  Object.values(slideEls).forEach(o=>o.sec.classList.remove('cur'));
+  slideEls[n].sec.classList.add('cur');
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas'); if(cv){cv.classList.remove('in');void cv.offsetWidth;cv.classList.add('in');}
+  cur=n; setMeta(); playVideos(n); setTimeout(()=>pulseEmphasis(n),220); setTimeout(()=>playCountup(n),240);
+}
+function setMeta(){
+  document.getElementById('prev').disabled=(cur===1);
+  document.getElementById('next').disabled=(cur===TOTAL);
+  document.getElementById('pnum').textContent=`${cur} / ${TOTAL}`;
+  document.getElementById('pbar').style.width=(cur/TOTAL*100)+'%';
+  syncToc();
+}
+
+/* ---------- scoring (slide 16) ---------- */
+function wireScoring(){
+  const root=slideEls[16].wrap;
+  root.querySelectorAll('[data-check]').forEach(el=>{
+    el.style.position=el.style.position||'absolute';
+    el.onclick=()=>{
+      const k=el.dataset.check; const i=+k[1]; const arr=k[0]==='x'?xState:yState;
+      arr[i]=!arr[i]; el.classList.toggle('on',arr[i]); touched=true; updateScore();
+    };
+  });
+  const cv=root.querySelector('.slide-canvas');
+  if(cv && !cv.querySelector('.cta-pill')) makeCta(cv, '브랜드 진단 결과 확인하기', 1810, 1020, ()=>go(17));
+  if(cv && !cv.querySelector('.score-criteria')){
+    const note=document.createElement('div'); note.className='score-criteria';
+    note.style.cssText+=`left:120px;top:905px;`;
+    note.innerHTML='📊 진단 기준 · 각 축 5개 항목 중 <b style="margin:0 5px;">3개 이상 = 높음</b> / <b style="margin:0 5px;">2개 이하 = 낮음</b>';
+    cv.appendChild(note);
+  }
+  updateScore();
+}
+function updateScore(){
+  const xs=xState.filter(Boolean).length*4, ys=yState.filter(Boolean).length*4;
+  const r=slideEls[16].wrap;
+  const sx=r.querySelector('[data-score="x"]'), sy=r.querySelector('[data-score="y"]');
+  if(sx)sx.textContent=xs; if(sy)sy.textContent=ys;
+  updateQuad();
+}
+function currentQuad(){
+  const {xs,ys}=axisScores();
+  const xH=xs>10, yH=ys>10;
+  if(xH&&yH)return 1; if(!xH&&yH)return 2; if(!xH&&!yH)return 3; return 4;
+}
+
+/* ---------- quadrant (slide 17) ---------- */
+const QUAD_INFO={
+  1:{name:'점유율 확장형', tag:'인지도 ↑ · 올리브영 관여도 ↑', strat:'보유 고객을 구매로, 점유율 굳히기', camp:'구매 특화 중심', src:'추천상품 배너형 · 쿠폰알림형', point:"새 길을 내기보다, 들어온 사람을 놓치지 않는 게 더 큰 성장입니다."},
+  2:{name:'신뢰확산형',   tag:'인지도 ↓ · 올리브영 관여도 ↑', strat:'검증된 신뢰를 신규 고객에게 확산해 성장 병목 돌파', camp:'신규 인지 확보 + 구매 전환 (균형)', src:'AI 리뷰형 · 쇼츠형 · OX퀴즈형', point:"안에서는 단단하지만 밖으로 성장이 막힌 단계. 아직 안 알려졌든 신규에 안 닿든, 쌓아둔 신뢰를 새 고객에게 확산할 차례입니다."},
+  3:{name:'풀퍼널 구축형', tag:'인지도 ↓ · 올리브영 관여도 ↓', strat:'인지부터 구매까지 한 번에', camp:'관심 고객 획득 중심 → 구매 특화', src:'5종 모두 활용', point:"둘 다 시작 단계입니다. 모수부터 키워야 전환도 생깁니다."},
+  4:{name:'전환가속형',   tag:'인지도 ↑ · 올리브영 관여도 ↓', strat:'관심고객 모수 확보 → 구매 전환', camp:'관심 고객 획득 + 구매 특화', src:'5종 모두 활용', point:"인지는 있지만 모수가 얇습니다. 씨앗을 먼저 심어야 거둡니다."},
+};
+/* shared: render a type's detail card (전략/캠페인/소재/진단포인트) into the panel */
+function quadCardHTML(q){const i=QUAD_INFO[q];
+  return `<div><div style="font-size:36px;font-weight:800;color:#1c2a16;line-height:1.18;">${q}사분면 · ${i.name}</div>`
+   +`<div style="font-size:18px;color:#5a6550;font-weight:700;margin-top:6px;">${i.tag}</div></div>`
+   +`<div style="display:grid;grid-template-columns:86px 1fr;row-gap:13px;column-gap:14px;font-size:19px;line-height:1.4;align-items:start;">`
+   +`<div style="color:#7a857a;font-weight:700;">전략</div><div style="color:#2b2f3d;">${i.strat}</div>`
+   +`<div style="color:#7a857a;font-weight:700;">캠페인</div><div style="color:#2b2f3d;">${i.camp}</div>`
+   +`<div style="color:#7a857a;font-weight:700;">추천 소재</div><div style="color:#2b2f3d;">${i.src}</div></div>`
+   +`<div style="background:#f3f6f1;border-radius:14px;padding:16px 20px;">`
+   +`<div style="font-size:15px;font-weight:800;color:var(--green-deep);margin-bottom:5px;">진단 포인트</div>`
+   +`<div style="font-size:17px;color:#5a6550;line-height:1.5;">${i.point}</div></div>`;
+}
+const QC={X0:205,Y0:335,S:610,H:305};
+function wireQuadrant(){
+  const root=slideEls[17].wrap, host=root.querySelector('.qchart-host');
+  if(!host) return;
+  if(host.dataset.built){ updateQuad(); return; }
+  host.dataset.built='1';
+  const {X0,Y0,S,H}=QC, C=X0+H, CY=Y0+H;
+  let h='';
+  h+=`<div style="position:absolute;left:${X0}px;top:${Y0}px;width:${S}px;height:${S}px;background:#fff;border-radius:18px;box-shadow:0 6px 24px rgba(40,70,30,.08);"></div>`;
+  h+=`<div style="position:absolute;left:${C-1}px;top:${Y0}px;width:2px;height:${S}px;background:#dbe6d0;"></div>`;
+  h+=`<div style="position:absolute;left:${X0}px;top:${CY-1}px;width:${S}px;height:2px;background:#dbe6d0;"></div>`;
+  host.innerHTML=h;
+  [[2,X0,Y0],[1,C,Y0],[3,X0,CY],[4,C,CY]].forEach(([q,zx,zy])=>{
+    const i=QUAD_INFO[q], z=document.createElement('div'); z.className='qzone'; z.dataset.quad=q;
+    z.style.cssText=`left:${zx}px;top:${zy}px;width:${H}px;height:${H}px;`;
+    z.innerHTML=`<div class="qn">${q} · ${i.name}</div><div class="qt">${i.tag}</div><div class="qgo">전략 보기 →</div>`;
+    z.onclick=()=>go(QUAD_PAGE[q]);
+    z.onmouseenter=()=>previewQuad(q);
+    z.onmouseleave=()=>updateQuad();
+    host.appendChild(z);
+  });
+  host.insertAdjacentHTML('beforeend',
+    `<div class="qaxis" style="left:${X0}px;top:${Y0+S+16}px;width:${S}px;text-align:center;font-size:20px;">브랜드 인지도 (올영 밖 시장) →</div>`
+   +`<div class="qaxis" style="left:${X0}px;top:${Y0+S+48}px;font-size:15px;">낮음</div>`
+   +`<div class="qaxis" style="left:${X0+S-32}px;top:${Y0+S+48}px;font-size:15px;">높음</div>`
+   +`<div class="qaxis" style="left:${X0-30}px;top:${Y0+S/2}px;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap;font-size:20px;">올리브영 관여도 (올영 안) →</div>`
+   +`<div class="qaxis" style="left:${X0-66}px;top:${Y0+S-24}px;font-size:15px;">낮음</div>`
+   +`<div class="qaxis" style="left:${X0-66}px;top:${Y0+6}px;font-size:15px;">높음</div>`);
+  const dot=document.createElement('div'); dot.className='qdot';
+  dot.innerHTML='<div class="qd-lab" id="qdlab">우리 브랜드</div><div class="qd-core"></div>';
+  host.appendChild(dot);
+  const panel=document.createElement('div'); panel.className='qpanel'; panel.id='qpanel';
+  panel.style.cssText='left:900px;top:335px;width:880px;height:612px;';
+  host.appendChild(panel);
+  updateQuad();
+}
+function updateQuad(){
+  const root=slideEls[17]&&slideEls[17].wrap; if(!root) return;
+  const host=root.querySelector('.qchart-host'); if(!host||!host.dataset.built) return;
+  const {xs,ys,baseX,baseY,rx,ry}=axisScores(), q=currentQuad();
+  host.querySelectorAll('.qzone').forEach(z=>z.classList.toggle('match',+z.dataset.quad===q && touched));
+  const {X0,Y0,S}=QC, dot=host.querySelector('.qdot');
+  if(dot){
+    dot.style.left=(X0+(xs/20)*S)+'px';
+    dot.style.top=(Y0+S-(ys/20)*S)+'px';
+    dot.classList.toggle('show',touched);
+    const lab=host.querySelector('#qdlab'); if(lab) lab.textContent=touched?`우리 브랜드 · 인지 ${xs}·관여 ${ys}`:'우리 브랜드';
+  }
+  const panel=host.querySelector('#qpanel'); if(!panel) return;
+  if(!touched){
+    panel.innerHTML='<div style="font-size:26px;font-weight:800;color:#3f8f28;">📍 여기에 진단 결과가 표시됩니다</div><div style="font-size:20px;color:#7a857a;line-height:1.65;">16페이지에서 <b>브랜드 인지도</b>·<b>올리브영 관여도</b> 항목을 체크하면,<br>그래프 위에 <b style="color:#3f8f28">우리 브랜드 위치</b>와 <b style="color:#3f8f28">맞춤 전략 유형</b>이 나타납니다.</div><div style="font-size:17px;color:#9aa48f;">기준 · 각 축 5개 중 3개 이상 체크 = 높음 / 2개 이하 = 낮음</div>';
+    return;
+  }
+  const dirs=[];
+  if(rx) dirs.push(`인지도 ${rx>0?'↑':'↓'}`);
+  if(ry) dirs.push(`관여도 ${ry>0?'↑':'↓'}`);
+  const recapLine = dirs.length
+    ? `<div style="font-size:16px;color:#5fbf3f;font-weight:700;margin-top:6px;">💡 세일 회고 반영 — ${dirs.join(' · ')}</div>`
+    : '';
+  // 위치 강도: 기준선(10점)에서 떨어진 정도(여유) — 약한 축으로 판정
+  const dx=Math.abs(xs-10), dy=Math.abs(ys-10), weak=Math.min(dx,dy);
+  let intname, intdesc;
+  if(weak>=10){ intname='전형형'; intdesc='이 유형의 가장 뚜렷한 예입니다'; }
+  else if(weak>=6){ intname='표준형'; intdesc='이 유형에 분명히 해당합니다'; }
+  else {
+    intname='경계형';
+    const flipX={1:2,2:1,3:4,4:3}, flipY={1:4,4:1,2:3,3:2}, adj=[];
+    if(dx<=2) adj.push(QUAD_INFO[flipX[q]].name);
+    if(dy<=2) adj.push(QUAD_INFO[flipY[q]].name);
+    intdesc=`기준선에 가까워, 인접 유형(${adj.join(' · ')}) 전략도 일부 참고하세요`;
+  }
+  const intColor = intname==='경계형' ? '#e08a00' : '#3f8f28';
+  const intLine=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:18px;">`
+    +`<span style="background:${intColor};color:#fff;font-weight:800;padding:6px 14px;border-radius:999px;white-space:nowrap;">위치 강도 · ${intname}</span>`
+    +`<span style="color:#7a857a;font-weight:600;font-size:16px;">${intdesc}</span></div>`;
+  panel.innerHTML=
+    `<div><div style="font-size:18px;color:#7a857a;font-weight:600;">진단 결과 · 인지도 <b style="color:#3f8f28">${xs}</b>/20 · 관여도 <b style="color:#3f8f28">${ys}</b>/20</div>`
+   +recapLine + `</div>` + intLine + quadCardHTML(q)
+   +`<button class="cta-pill" style="position:static;align-self:flex-start;transform:none;font-size:21px;padding:15px 28px;margin-top:2px;" onclick="go(${QUAD_PAGE[q]})">${QUAD_INFO[q].name} 전략 자세히 보기 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
+}
+/* hover-preview a quadrant type's card (browse all 4 one at a time) */
+function previewQuad(q){
+  const root=slideEls[17]&&slideEls[17].wrap; if(!root) return;
+  const panel=root.querySelector('#qpanel'); if(!panel) return;
+  panel.innerHTML=`<div style="font-size:16px;color:#9aa48f;font-weight:700;">유형 미리보기</div>`
+    +quadCardHTML(q)
+    +`<button class="cta-pill" style="position:static;align-self:flex-start;transform:none;font-size:21px;padding:15px 28px;margin-top:2px;" onclick="go(${QUAD_PAGE[q]})">${QUAD_INFO[q].name} 전략 자세히 보기 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
+}
+
+/* ---------- videos ---------- */
+function injectVideos(n){
+  if(!VIDEOS[n]||!slideEls[n].wrap.querySelector('.slide-canvas')) return;
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas');
+  VIDEOS[n].forEach(m=>{
+    if(cv.querySelector(`[data-vid="${m.src}"]`)) return;
+    const w=document.createElement('div'); w.dataset.vid=m.src;
+    w.style.cssText=`position:absolute;left:${m.left}px;top:${m.top}px;width:${m.w}px;height:${m.h}px;border-radius:${m.radius||0}px;overflow:hidden;`;
+    const v=document.createElement('video'); v.src=m.src; v.loop=true; v.muted=true; v.playsInline=true; v.autoplay=true;
+    v.setAttribute('playsinline','');v.setAttribute('muted','');v.setAttribute('autoplay','');
+    v.style.cssText='width:100%;height:100%;object-fit:'+(m.fit||'cover')+';display:block;';
+    w.appendChild(v); cv.appendChild(w);
+    v.play().catch(()=>{});
+  });
+  if(+n===cur) playVideos(cur);
+}
+function playVideos(n){
+  for(const p in slideEls){ const cv=slideEls[p].wrap.querySelector('.slide-canvas'); if(!cv)continue;
+    cv.querySelectorAll('video').forEach(v=>{ if(+p===n)v.play().catch(()=>{}); else v.pause(); }); }
+}
+
+/* ---------- CTA button helper (px-positioned on the 1920x1080 canvas) ---------- */
+function makeCta(cv, label, x, y, onClick){
+  const b=document.createElement('button'); b.className='cta-pill';
+  b.style.cssText=`left:${x}px;top:${y}px;transform:translate(-100%,-100%);font-size:24px;padding:16px 30px;border-radius:999px;`;
+  b.innerHTML=`${label} <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+  b.onclick=onClick; cv.appendChild(b); return b;
+}
+
+/* ---------- slide 15: keyword pills (single-select per question) + CTA ---------- */
+function wireSlide15(){
+  const cv=slideEls[15].wrap.querySelector('.slide-canvas'); if(!cv||cv.querySelector('.kw-pill')) return;
+  P15.forEach((q,qi)=>{
+    q.forEach((o,oi)=>{
+      const b=document.createElement('button'); b.className='kw-pill';
+      b.style.cssText=`left:${o.l}px;top:${o.t}px;width:${o.w}px;height:${o.h}px;border-radius:${o.h/2}px;`;
+      b.dataset.q=qi; b.dataset.o=oi;
+      b.onclick=()=>{
+        cv.querySelectorAll(`.kw-pill[data-q="${qi}"]`).forEach(e=>e.classList.remove('on'));
+        b.classList.add('on'); recapSel[qi]=oi;
+        updateRecapSummary();            // 15P 요약 박스 갱신
+        if(touched){ updateScore(); }    // 16P 진단 했으면 회고 보정 즉시 반영
+      };
+      cv.appendChild(b);
+    });
+  });
+  // 회고 요약 박스 (우측 빈 공간)
+  const box=document.createElement('div'); box.id='recapBox';
+  box.style.cssText='position:absolute;left:980px;top:296px;width:800px;height:600px;background:#fff;border-radius:22px;'
+    +'box-shadow:0 10px 36px rgba(40,70,30,.1);padding:38px 42px;box-sizing:border-box;';
+  cv.appendChild(box);
+  updateRecapSummary();
+  // CTA bottom-right -> diagnosis (slide 16)
+  makeCta(cv, '브랜드 진단도 시작하기', 1810, 1020, ()=>go(16));
+}
+function updateRecapSummary(){
+  const cv=slideEls[15]&&slideEls[15].wrap.querySelector('.slide-canvas'); if(!cv) return;
+  const box=cv.querySelector('#recapBox'); if(!box) return;
+  const picks=[]; for(const qi in recapSel){ const m=RECAP_MAP[qi+'-'+recapSel[qi]]; if(m&&m.label) picks.push(m); }
+  const {rx,ry}=recapAdjust();
+  const sx=rx>0?'high':rx<0?'low':null, sy=ry>0?'high':ry<0?'low':null;
+  const chip=m=>`<span style="display:inline-flex;align-items:center;gap:6px;background:#eaf7e3;border:1px solid #cfe6bd;border-radius:999px;padding:8px 16px;font-size:18px;color:#2b2f3d;margin:0 8px 8px 0;">${m.label} <b style="color:${m.eff.includes('↓')?'#e08a00':'#3f8f28'}">${m.eff}</b></span>`;
+  const kw = picks.length ? picks.map(chip).join('') : `<span style="color:#9aa48f;font-size:18px;">아직 진단에 연결되는 키워드를 안 고르셨어요</span>`;
+  let tend;
+  if(sx&&sy){
+    const q=(sx==='high'&&sy==='high')?1:(sx==='low'&&sy==='high')?2:(sx==='low'&&sy==='low')?3:4;
+    tend=`<div style="font-size:30px;font-weight:800;color:#1c2a16;">→ <span style="color:#3f8f28">${QUAD_INFO[q].name}</span> 쪽 신호 <span style="font-size:18px;color:#9aa48f;font-weight:600;">(성향·참고)</span></div>`;
+  } else if(sx||sy){
+    const axis=sx?'인지도':'관여도', dir=(sx||sy)==='high'?'강한':'보완이 필요한';
+    tend=`<div style="font-size:26px;font-weight:800;color:#1c2a16;">→ <span style="color:#3f8f28">${axis}</span>가 ${dir} 신호 <span style="font-size:17px;color:#9aa48f;font-weight:600;">(나머지 축은 16P에서)</span></div>`;
+  } else {
+    tend=`<div style="font-size:22px;color:#9aa48f;font-weight:600;">→ 회고만으론 방향이 약해요. 16P 진단으로 확인하세요.</div>`;
+  }
+  box.innerHTML=`<div style="font-size:22px;font-weight:800;color:var(--green-deep);margin-bottom:18px;">📋 세일 회고 요약</div>`
+    +`<div style="font-size:16px;color:#7a857a;font-weight:600;margin-bottom:10px;">진단에 연결되는 키워드</div>`
+    +`<div style="margin-bottom:26px;">${kw}</div>`
+    +tend
+    +`<div style="margin-top:28px;background:#f3f6f1;border-radius:12px;padding:16px 20px;font-size:16px;color:#7a857a;line-height:1.5;">※ 회고는 진단을 살짝 밀어주는 <b>참고 신호</b>예요. 정확한 유형은 <b>16P → 17P</b>가 최종 결정합니다.</div>`;
+}
+
+/* ---------- external link hotspots on image slides ---------- */
+function injectLinks(n){
+  if(!LINKS[n]) return;
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv) return;
+  LINKS[n].forEach(m=>{
+    if(cv.querySelector(`a[href="${m.url}"]`)) return;
+    const a=document.createElement('a'); a.className='link-hot'; a.href=m.url; a.target='_blank'; a.rel='noopener noreferrer';
+    a.title=m.url;
+    a.style.cssText=`left:${m.left}px;top:${m.top}px;width:${m.w}px;height:${m.h}px;`;
+    cv.appendChild(a);
+  });
+}
+
+/* ---------- chart emphasis overlays (hover highlight) ---------- */
+function injectEmphasis(n){
+  if(!EMPHASIS[n]) return;
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv||cv.querySelector('.emph')) return;
+  EMPHASIS[n].forEach(e=>{
+    const d=document.createElement('div'); d.className='emph';
+    if(e.circle){ const [cx,cy,r]=e.circle; d.classList.add('circ');
+      d.style.cssText=`left:${cx-r}px;top:${cy-r}px;width:${2*r}px;height:${2*r}px;`;
+    } else { const [l,t,w,h]=e.rect;
+      d.style.cssText=`left:${l}px;top:${t}px;width:${w}px;height:${h}px;`;
+    }
+    if(e.label){ const t=document.createElement('div'); t.className='emph-tip'; t.textContent=e.label; d.appendChild(t); }
+    cv.appendChild(d);
+  });
+}
+function pulseEmphasis(n){
+  const cv=slideEls[n]&&slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv) return;
+  cv.querySelectorAll('.emph').forEach(el=>{ el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); });
+}
+
+/* ---------- count-up numbers (slide 7) ---------- */
+function fmtEok(v){ var n=Math.round(v), cho=Math.floor(n/10000), eok=n%10000;
+  return (cho>0? cho+'조 ' : '') + eok.toLocaleString('en-US') + '억'; }
+function fmtNum(v,s){
+  if(s.fmt==='eok') return fmtEok(v);
+  var t = s.dec ? v.toFixed(s.dec) : String(Math.round(v));
+  return t + (s.suffix||'');
+}
+function injectBadge(n){
+  if(!BADGE[n]) return;
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv||cv.querySelector('.chbadge')) return;
+  const b=BADGE[n], d=document.createElement('div'); d.className='chbadge';
+  d.style.cssText=`left:${b.left}px;top:${b.top}px;width:${b.w}px;height:${b.h}px;padding-left:${b.padLeft}px;font-size:${b.size}px;`;
+  d.textContent=b.text; cv.appendChild(d);
+}
+function injectCountup(n){
+  if(!COUNTUP[n]) return;
+  const cv=slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv||cv.querySelector('.cnum')) return;
+  COUNTUP[n].forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='cnum'; d.dataset.ci=i;
+    d.style.cssText=`left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px;font-size:${s.size}px;`
+      +(s.center?'justify-content:center;':'justify-content:flex-start;');
+    d.textContent=fmtNum(s.target,s);   // rest state = final value
+    cv.appendChild(d);
+  });
+}
+function playCountup(n){
+  if(!COUNTUP[n]) return;
+  const cv=slideEls[n]&&slideEls[n].wrap.querySelector('.slide-canvas'); if(!cv) return;
+  COUNTUP[n].forEach((s,i)=>{
+    const el=cv.querySelector(`.cnum[data-ci="${i}"]`); if(!el) return;
+    if(el._timer) clearInterval(el._timer);
+    const dur=1300, t0=performance.now();
+    el._timer=setInterval(()=>{
+      var p=Math.min(1,(performance.now()-t0)/dur), e=1-Math.pow(1-p,3);
+      el.textContent=fmtNum(s.target*e,s);
+      if(p>=1){ clearInterval(el._timer); el._timer=null; el.textContent=fmtNum(s.target,s); }
+    },16);
+  });
+}
+
+/* ---------- TOC ---------- */
+const tocScroll=document.getElementById('tocScroll'); const linkByPage={};
+TOC.forEach(g=>{
+  const grp=document.createElement('div'); grp.className='grp'+(g.open?'':' closed');
+  const gh=document.createElement('button'); gh.className='gh'; gh.innerHTML=`<span>${g.t}</span><span class="chev">▾</span>`;
+  gh.onclick=()=>grp.classList.toggle('closed'); grp.appendChild(gh);
+  const items=document.createElement('div'); items.className='items';
+  for(let p=g.r[0];p<=g.r[1];p++){
+    const a=document.createElement('button'); a.className='toc-link';
+    a.innerHTML=`<span class="pn">${p}</span><span>${TITLES[p]||'슬라이드 '+p}</span>${STARS[p]?'<span class="star">★</span>':''}`;
+    a.onclick=()=>go(p); items.appendChild(a); linkByPage[p]=a;
+  }
+  grp.appendChild(items); tocScroll.appendChild(grp);
+});
+function syncToc(){
+  Object.values(linkByPage).forEach(a=>a.classList.remove('active'));
+  const a=linkByPage[cur]; if(a){a.classList.add('active'); const grp=a.closest('.grp'); if(grp.classList.contains('closed'))grp.classList.remove('closed'); a.scrollIntoView({block:'nearest'});}
+}
+function toggleToc(){document.getElementById('toc').classList.toggle('collapsed');setTimeout(fit,300);}
+
+/* ---------- input ---------- */
+let wheelLock=false;
+document.getElementById('main').addEventListener('wheel',e=>{
+  e.preventDefault(); if(wheelLock)return;
+  const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY; if(Math.abs(d)<6)return;
+  wheelLock=true; go(cur+(d>0?1:-1)); setTimeout(()=>wheelLock=false,560);
+},{passive:false});
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){go(cur+1);e.preventDefault();}
+  else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){go(cur-1);e.preventDefault();}
+  else if(e.key==='Home')go(1); else if(e.key==='End')go(TOTAL);
+});
+
+// safety net: some browsers gate autoplay until a user gesture — on first interaction, play current slide's videos
+['pointerdown','keydown','wheel','touchstart'].forEach(ev=>document.addEventListener(ev,()=>playVideos(cur),{passive:true}));
+
+/* ---------- init ---------- */
+fit(); go(1);
+// warm a few
+[1,2,3,16,17,18].forEach(loadSlide);
+</script>
+</body>
+</html>
