@@ -329,6 +329,12 @@ function wireScoring(){
     note.innerHTML='📊 진단 기준 · 각 축 5개 항목 중 <b style="margin:0 5px;">3개 이상 = 높음</b> / <b style="margin:0 5px;">2개 이하 = 낮음</b>';
     cv.appendChild(note);
   }
+  if(cv && !cv.querySelector('.diag-guide')){
+    const g=document.createElement('div'); g.className='diag-guide';
+    g.style.cssText='position:absolute;left:305px;top:228px;font-size:24px;font-weight:700;color:#258900;';
+    g.textContent='📋 우리 브랜드에 해당하는 항목을 모두 체크해 주세요';
+    cv.appendChild(g);
+  }
   updateScore();
 }
 function updateScore(){
