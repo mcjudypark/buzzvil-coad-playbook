@@ -70,6 +70,8 @@
   [data-check].on{background:var(--green)!important;border-color:var(--green-deep)!important;box-shadow:0 0 0 3px rgba(95,191,63,.25);}
   [data-check].on::after{content:"";position:absolute;left:50%;top:48%;width:30%;height:55%;border:solid #fff;border-width:0 3px 3px 0;transform:translate(-50%,-50%) rotate(45deg);}
   [data-check]{position:absolute;}
+  .check-row-hot{position:absolute;cursor:pointer;border-radius:8px;transition:background .12s;z-index:4;}
+  .check-row-hot:hover{background:rgba(95,191,63,.10);}
   [data-quad]{transition:box-shadow .2s,transform .2s,background .2s;}
   [data-quad]:hover{box-shadow:0 0 0 3px rgba(95,191,63,.5),var(--shadow);}
   [data-quad].match{box-shadow:0 0 0 4px var(--green),0 0 0 10px rgba(95,191,63,.2),var(--shadow);animation:qpulse 1.8s ease-in-out infinite;}
@@ -310,6 +312,14 @@ function wireScoring(){
       const k=el.dataset.check; const i=+k[1]; const arr=k[0]==='x'?xState:yState;
       arr[i]=!arr[i]; el.classList.toggle('on',arr[i]); touched=true; updateScore();
     };
+    if(!el.dataset.rowhot){
+      el.dataset.rowhot='1';
+      const left=parseInt(el.style.left)||0, top=parseInt(el.style.top)||0;
+      const hot=document.createElement('div'); hot.className='check-row-hot';
+      hot.style.left=(left+24)+'px'; hot.style.top=(top-8)+'px'; hot.style.width='692px'; hot.style.height='38px';
+      hot.onclick=()=>el.onclick();
+      el.parentElement.appendChild(hot);
+    }
   });
   const cv=root.querySelector('.slide-canvas');
   if(cv && !cv.querySelector('.cta-pill')) makeCta(cv, '브랜드 진단 결과 확인하기', 1810, 1020, ()=>go(17));
