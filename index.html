@@ -142,7 +142,7 @@
 
 <script>
 const TOTAL = 36;
-const SKIP = new Set([5,7]);                                  // 숨긴 슬라이드 — 번호/배선은 유지, 화면에만 안 보임
+const SKIP = new Set([4,5,6,7]);                              // Ch.01(시장의 변화) 통째 숨김 — 번호/배선은 유지, 화면에만 안 보임
 const dispTotal = TOTAL - SKIP.size;                          // 표시용 총 장수 (35)
 const dispNum = n => n - [...SKIP].filter(s=>s<n).length;     // 표시용 순번 (건너뛴 것 제외)
 /* slide titles for TOC (refined as slides get built) */
@@ -159,7 +159,6 @@ const STARS = {15:1,16:1,17:1};
 /* TOC chapter groups (page ranges) */
 const TOC = [
   {t:'표지 · Intro', open:true, r:[1,3]},
-  {t:'Ch.01 시장의 변화', open:false, r:[4,7]},
   {t:'Ch.02 협력광고', open:false, r:[8,13]},
   {t:'Ch.03 우리 브랜드 진단', open:true, r:[14,24]},
   {t:'Ch.04 성공 사례', open:false, r:[25,31]},
