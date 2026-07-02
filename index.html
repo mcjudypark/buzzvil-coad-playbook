@@ -142,7 +142,7 @@
 
 <script>
 const TOTAL = 36;
-const SKIP = new Set([7]);                                    // 숨긴 슬라이드 — 번호/배선은 유지, 화면에만 안 보임
+const SKIP = new Set([5,7]);                                  // 숨긴 슬라이드 — 번호/배선은 유지, 화면에만 안 보임
 const dispTotal = TOTAL - SKIP.size;                          // 표시용 총 장수 (35)
 const dispNum = n => n - [...SKIP].filter(s=>s<n).length;     // 표시용 순번 (건너뛴 것 제외)
 /* slide titles for TOC (refined as slides get built) */
