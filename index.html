@@ -137,11 +137,14 @@
   <div id="stage"></div>
   <button id="prev" class="nav-arrow" title="이전 (←)" onclick="go(cur-1)"><svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
   <button id="next" class="nav-arrow" title="다음 (→)" onclick="go(cur+1)"><svg viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
-  <div id="pageind"><span id="pnum">1 / 36</span><span class="bar"><i id="pbar"></i></span></div>
+  <div id="pageind"><span id="pnum">1 / 35</span><span class="bar"><i id="pbar"></i></span></div>
 </div>
 
 <script>
 const TOTAL = 36;
+const SKIP = new Set([7]);                                    // 숨긴 슬라이드 — 번호/배선은 유지, 화면에만 안 보임
+const dispTotal = TOTAL - SKIP.size;                          // 표시용 총 장수 (35)
+const dispNum = n => n - [...SKIP].filter(s=>s<n).length;     // 표시용 순번 (건너뛴 것 제외)
 /* slide titles for TOC (refined as slides get built) */
 const TITLES = {
   1:'표지', 2:'목차', 3:'Intro · 왜 만들었나',
@@ -287,7 +290,11 @@ window.addEventListener('resize',fit);
 
 /* ---------- navigation ---------- */
 function go(n){
+  const dir = n>cur ? 1 : -1;
   n=Math.max(1,Math.min(TOTAL,n));
+  while(SKIP.has(n)){ n+=dir; }            // 숨긴 슬라이드는 이동 방향으로 건너뜀
+  n=Math.max(1,Math.min(TOTAL,n));
+  if(SKIP.has(n)) return;
   // preload neighbours
   loadSlide(n); loadSlide(n+1); loadSlide(n-1>=1?n-1:1);
   Object.values(slideEls).forEach(o=>o.sec.classList.remove('cur'));
@@ -298,8 +305,8 @@ function go(n){
 function setMeta(){
   document.getElementById('prev').disabled=(cur===1);
   document.getElementById('next').disabled=(cur===TOTAL);
-  document.getElementById('pnum').textContent=`${cur} / ${TOTAL}`;
-  document.getElementById('pbar').style.width=(cur/TOTAL*100)+'%';
+  document.getElementById('pnum').textContent=`${dispNum(cur)} / ${dispTotal}`;
+  document.getElementById('pbar').style.width=(dispNum(cur)/dispTotal*100)+'%';
   syncToc();
 }
 
@@ -620,8 +627,9 @@ TOC.forEach(g=>{
   gh.onclick=()=>grp.classList.toggle('closed'); grp.appendChild(gh);
   const items=document.createElement('div'); items.className='items';
   for(let p=g.r[0];p<=g.r[1];p++){
+    if(SKIP.has(p)) continue;             // 숨긴 슬라이드는 목차에서 제외
     const a=document.createElement('button'); a.className='toc-link';
-    a.innerHTML=`<span class="pn">${p}</span><span>${TITLES[p]||'슬라이드 '+p}</span>${STARS[p]?'<span class="star">★</span>':''}`;
+    a.innerHTML=`<span class="pn">${dispNum(p)}</span><span>${TITLES[p]||'슬라이드 '+p}</span>${STARS[p]?'<span class="star">★</span>':''}`;
     a.onclick=()=>go(p); items.appendChild(a); linkByPage[p]=a;
   }
   grp.appendChild(items); tocScroll.appendChild(grp);
