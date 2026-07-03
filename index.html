@@ -142,6 +142,7 @@
 
 <script>
 const TOTAL = 36;
+const ASSETV = 'v250703b';                                    // 이미지 캐시 무효화 — 이미지 바뀔 때마다 이 값을 바꾸면 브라우저가 새로 받음
 const SKIP = new Set([4,5,6,7]);                              // Ch.01(시장의 변화) 통째 숨김 — 번호/배선은 유지, 화면에만 안 보임
 const dispTotal = TOTAL - SKIP.size;                          // 표시용 총 장수 (35)
 const dispNum = n => n - [...SKIP].filter(s=>s<n).length;     // 표시용 순번 (건너뛴 것 제외)
@@ -262,6 +263,7 @@ async function loadSlide(n){
     if(window.__SLIDES && window.__SLIDES[n]!=null){ html=window.__SLIDES[n]; }   // embedded (works via file://)
     else { const res=await fetch(`slides/s${String(n).padStart(2,'0')}.html`,{cache:'no-cache'}); if(!res.ok) throw new Error('404'); html=await res.text(); }
     slideEls[n].wrap.innerHTML=html;
+    slideEls[n].wrap.querySelectorAll('img').forEach(im=>{ const s=im.getAttribute('src'); if(s&&s.indexOf('pages/')===0&&s.indexOf('?')<0) im.setAttribute('src', s+'?'+ASSETV); });
     loaded[n]='ok';
     if(n===15) wireSlide15();
     if(n===16) wireScoring();
